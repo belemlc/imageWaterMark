@@ -3,27 +3,27 @@
 class ImageWaterMark {
 
     private $image = null;
-    private $logo_mark = 'logoin.png';
+    private $logo = 'logoin.png';
     private $padding = 10;
     private $opacity = 80;
     private $quality = 100;
     private $percent = 0.2;
     private $width = '500';
     private $height = '500';
-    private $output = 'tmp/';
+    private $output = './';
     private $image_data = array();
 
-    public function __construct(string $image) {
+    public function __construct($image) {
         $this->image = $image;
+        var_dump(pathinfo($image)); exit;
         $this->image_data = getimagesize($this->image);
     }
 
-    private function adjustQuality(): bool {
+    private function reduceImagesize() {
         $result = false;
         
         list($width, $height, $type) = getimagesize($this->image);
-        // $width = $this->width*$this->percent;
-        // $height = $this->height*$this->percent;
+        
         $imageIdentifier = imagecreatetruecolor($this->width, $this->height);
         $imageType = '';
         if ($this->getImageType($this->image) == 'jpeg') {
@@ -35,40 +35,28 @@ class ImageWaterMark {
         }
         imagecopyresampled($imageIdentifier, $imageType, 0, 0, 0, 0, $this->width, $this->height, $width, $height);
         $this->output = $this->output.'foto_nova.jpeg';
-        $result = imagejpeg($imageIdentifier, $this->output, $this->quality);
-        return $result;
+        imagejpeg($imageIdentifier, $this->output, $this->quality);
+        $this->createWaterMark($this->output);
     }
 
-    private function writeMark() {
-        $imagem_original = "foto.jpg"; //nome da imagem original
-        $logo_img = "logo.gif"; //nome da logo (utilize png ou gif com fundo transparente)
-        $padding = 10; //define o espaço que a logo terá no lado esquerdo e na parte de baixo
-        $opacidade = 80; //define a porcentagem de transparência da logo
-        $logo = imagecreatefromgif($logo_img); //cria a logo
-        $imagem = imagecreatefromjpeg($imagem_original); //cria a imagem original
-        if(!$imagem || !$logo) die("Erro: imagem original ou logo não foram carregadas!"); //verificar se as imagens foram carregadas
-          
-        $logo_size = getimagesize($logo_img); //obtêm as dimensões da logo
-        $logo_width = $logo_size[0]; //atribui a largura da logo
-        $logo_height = $logo_size[1]; //atribui a altura da logo
-        $imagem_size = getimagesize($imagem_original); //obtêm as dimensões da imagem original
-        $dest_x = $imagem_size[0] - $logo_width - $padding;//define a posição horizontal que a logo se posicionará
-        $dest_y = $imagem_size[1] - $logo_height - $padding;//define a posição vertical que a logo se posicionará
-          
-        imagecopymerge($imagem, $logo, $dest_x, $dest_y, 0, 0, $logo_width, $logo_height, $opacidade);//cópia marca d'água na imagem original
-          
-        // exibe a imagem com a marca d'água aplicada
-        header("content-type: image/jpeg");
-        imagejpeg($imagem);
-        imagedestroy($imagem);
-        imagedestroy($logo);
+    private function createWaterMark($image) {
+        $watermark = imagecreatefrompng($this->logo);
+        $photo = imagecreatefromjpeg($image);
+        // align image to bottom right
+        $wx = imagesx($photo) - imagesx($watermark) - $this->padding;
+        $wy = imagesy($photo) - imagesy($watermark) - $this->padding;
+        imagecopy($photo, $watermark, $wx, $wy, 0, 0, imagesx($watermark), imagesy($watermark));
+        //header('content-type: image/jpeg');
+        imagejpeg($photo, 'tmp/foto_marked.jpeg', 100);
     }
 
     public function make() {
-        $this->adjustQuality();
+        $this->reduceImagesize();
+        //$this->writeMark();
+        //$this->createWaterMark();
     }
 
-    private function getImageType($image): string {
+    private function getImageType($image) {
         list($width, $height, $_type) = getimagesize($image);
         $type = '';
         switch ($_type) {
