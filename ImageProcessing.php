@@ -192,8 +192,7 @@ class ImageProcessing {
             $wy = imagesy($image) - imagesy($watermark) - 10;
         }
         imagecopy($image, $watermark, $wx, $wy, 0, 0, imagesx($watermark), imagesy($watermark));
-        header('content-type: image/jpeg');
-        imagejpeg($image, null, 100);
+        return imagejpeg($image, $imagedir, 100);
     }
 
     
